@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Intelligence Layer — implementation notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #08080a;
+    --bg-elev: #101014;
+    --bg-elev-2: #17171d;
+    --line: #1e1e25;
+    --line-strong: #2a2a33;
+    --fg: #ececee;
+    --fg-muted: #b0b2b8;
+    --fg-dim: #828590;
+    --fg-dimmer: #5a5c65;
+    --accent: #67e8f9;
+    --accent-soft: rgba(103, 232, 249, 0.08);
+    --green: #22c55e;
+    --yellow: #eab308;
+    --red: #ef4444;
+    --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--sans);
+    font-weight: 400;
+    font-size: 14.5px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ::selection { background: rgba(103, 232, 249, 0.2); }
+
+  .section {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 80px 48px;
+    border-bottom: 1px solid var(--line);
+  }
+  .section:last-of-type { border-bottom: none; }
+  .section-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    color: var(--fg-dim);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 30px;
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.005em;
+    color: var(--fg);
+    margin-bottom: 12px;
+  }
+  h2 {
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.3;
+    letter-spacing: -0.005em;
+    color: var(--fg);
+    margin-bottom: 18px;
+  }
+  h3 { font-size: 14.5px; font-weight: 500; color: var(--fg); margin-bottom: 6px; }
+  h4 {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    color: var(--fg-dim);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  p { color: var(--fg-muted); margin-bottom: 14px; max-width: 720px; }
+  p.note { color: var(--fg-dim); font-size: 13px; }
+  code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--bg-elev-2);
+    padding: 1px 6px;
+    border-radius: 3px;
+    border: 1px solid var(--line);
+    color: var(--fg);
+  }
+  .tag {
+    display: inline-flex; align-items: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 3px;
+    border: 1px solid var(--line-strong);
+    color: var(--fg-muted);
+    background: var(--bg-elev);
+  }
+  .tag.green { color: var(--green); border-color: rgba(34, 197, 94, 0.35); background: rgba(34, 197, 94, 0.1); }
+  .tag.yellow { color: var(--yellow); border-color: rgba(234, 179, 8, 0.35); background: rgba(234, 179, 8, 0.1); }
+  .tag.red { color: var(--red); border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.1); }
+  .tag.gray { color: var(--fg-dim); }
+
+  /* TOPBAR */
+  .topbar {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(8, 8, 10, 0.9);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar-inner {
+    max-width: 1040px; margin: 0 auto;
+    padding: 12px 48px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .brand {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    color: var(--fg);
+  }
+  .brand .dim { color: var(--fg-dim); }
+  .topbar nav { display: flex; gap: 22px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.05em; }
+  .topbar nav a { color: var(--fg-dim); transition: color 120ms ease; }
+  .topbar nav a:hover { color: var(--fg); }
+
+  /* DOC HEADER */
+  .doc-header { padding: 72px 48px 36px; max-width: 1040px; margin: 0 auto; }
+  .doc-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--fg-dim);
+    letter-spacing: 0.08em;
+    margin-bottom: 22px;
+    display: flex; gap: 16px; flex-wrap: wrap;
+  }
+  .doc-meta span + span::before { content: "·"; margin-right: 16px; color: var(--fg-dimmer); }
+  .doc-meta .status {
+    color: var(--yellow);
+    padding: 2px 8px;
+    border: 1px solid rgba(234, 179, 8, 0.3);
+    border-radius: 3px;
+    margin-left: -8px;
+  }
+  .doc-subtitle { font-size: 15px; color: var(--fg-muted); max-width: 680px; margin-top: 8px; }
+
+  /* TOC */
+  .toc {
+    max-width: 1040px; margin: 24px auto 0;
+    padding: 0 48px 56px;
+  }
+  .toc-list {
+    list-style: none;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .toc-list li {
+    display: grid;
+    grid-template-columns: 42px 1fr auto;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--line);
+    align-items: baseline;
+  }
+  .toc-list li:last-child { border-bottom: none; }
+  .toc-list li:hover { background: rgba(255,255,255,0.015); }
+  .toc-list .num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--fg-dim);
+    letter-spacing: 0.1em;
+  }
+  .toc-list a {
+    color: var(--fg);
+    font-size: 14px;
+  }
+  .toc-list .page {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--fg-dim);
+    letter-spacing: 0.08em;
+  }
+
+  /* INTEGRATION DIAGRAM (§2) */
+  .int-diagram {
+    margin-top: 28px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--bg-elev);
+    padding: 28px 24px;
+  }
+  .int-svg { width: 100%; height: auto; display: block; }
+  .int-svg text { font-family: var(--mono); fill: var(--fg-muted); }
+  .int-svg text.col { font-size: 10px; fill: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase; }
+  .int-svg text.node { font-size: 12px; fill: var(--fg); font-weight: 500; letter-spacing: 0.02em; }
+  .int-svg text.edge { font-size: 9.5px; fill: var(--fg-dim); letter-spacing: 0.08em; text-transform: uppercase; }
+  .int-svg .box { fill: var(--bg-elev-2); stroke: var(--line-strong); stroke-width: 1; }
+  .int-svg .box.hub { fill: var(--bg-elev-2); stroke: var(--accent); stroke-width: 1.5; }
+  .int-svg .box.muted { opacity: 0.4; stroke-dasharray: 3 3; }
+  .int-svg .arrow { fill: none; stroke-width: 1.2; }
+  .int-svg .arrow.green { stroke: var(--green); }
+  .int-svg .arrow.yellow { stroke: var(--yellow); }
+  .int-svg .arrow.red { stroke: var(--red); }
+  .int-svg .arrow.out { stroke: var(--fg-dimmer); stroke-width: 1; }
+
+  .tier-legend {
+    margin-top: 20px;
+    display: flex; gap: 20px; flex-wrap: wrap;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--fg-dim);
+    letter-spacing: 0.05em;
+  }
+  .tier-legend .swatch {
+    display: inline-block; width: 8px; height: 8px; border-radius: 2px;
+    margin-right: 6px; vertical-align: middle;
+  }
+  .tier-legend .swatch.g { background: var(--green); }
+  .tier-legend .swatch.y { background: var(--yellow); }
+  .tier-legend .swatch.r { background: var(--red); }
+
+  /* SOURCE ROWS (simplified) */
+  .src-table {
+    margin-top: 28px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--bg-elev);
+    overflow: hidden;
+  }
+  .src-row {
+    display: grid;
+    grid-template-columns: 150px 80px 1fr;
+    gap: 24px;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--line);
+    align-items: baseline;
+  }
+  .src-row:last-child { border-bottom: none; }
+  .src-row .name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--fg);
+  }
+  .src-row .name .kind {
+    display: block;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--fg-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 2px;
+    font-weight: 400;
+  }
+  .src-row .body { font-size: 13px; color: var(--fg-muted); line-height: 1.6; }
+  .src-row.muted { opacity: 0.55; }
+
+  /* PIPELINE (§3) */
+  .pipeline-wrap {
+    margin-top: 28px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--bg-elev);
+    padding: 32px 28px 28px;
+  }
+  .pipeline-svg text { font-family: var(--mono); fill: var(--fg-muted); }
+  .pipeline-svg text.stage { font-size: 10px; fill: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase; }
+  .pipeline-svg text.node { font-size: 12px; fill: var(--fg); font-weight: 500; }
+  .pipeline-svg text.sub { font-size: 10px; fill: var(--fg-dim); }
+  .pipeline-svg .box { fill: var(--bg-elev-2); stroke: var(--line-strong); stroke-width: 1; rx: 3; }
+  .pipeline-svg .box.key { stroke: var(--accent); stroke-width: 1.2; }
+  .pipeline-svg .arrow { fill: none; stroke: var(--fg-dimmer); stroke-width: 1; }
+  .pipeline-svg .arrow.loop { stroke: var(--accent); stroke-dasharray: 3 3; stroke-width: 1; }
+  .pipeline-svg .divider { stroke: var(--line); stroke-width: 1; stroke-dasharray: 2 4; }
+
+  .stage-notes {
+    margin-top: 22px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+  }
+  .stage-note {
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: var(--bg-elev);
+  }
+  .stage-note .name {
+    font-size: 12.5px; color: var(--fg); font-weight: 500; margin-bottom: 6px;
+  }
+  .stage-note .detail { font-size: 11.5px; color: var(--fg-muted); line-height: 1.55; }
+
+  /* JOURNEY (§4) */
+  .journey { margin-top: 28px; display: grid; grid-template-columns: 1fr; gap: 28px; }
+  .timeline {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--bg-elev);
+    padding: 28px 32px;
+  }
+  .timeline h4 { margin-bottom: 20px; }
+  .timeline-item {
+    display: grid;
+    grid-template-columns: 70px 14px 1fr;
+    gap: 16px;
+    padding: 6px 0;
+    align-items: start;
+  }
+  .timeline-item .time {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    padding-top: 3px;
+  }
+  .timeline-item .marker {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--bg-elev);
+    border: 1.5px solid var(--accent);
+    margin-top: 7px; position: relative; margin-left: 3px;
+  }
+  .timeline-item .marker::after {
+    content: "";
+    position: absolute;
+    left: 50%; top: 100%;
+    transform: translateX(-50%);
+    width: 1px; height: 24px;
+    background: var(--line-strong);
+  }
+  .timeline-item:last-child .marker::after { display: none; }
+  .timeline-item .body { font-size: 13.5px; color: var(--fg); line-height: 1.55; padding: 2px 0 18px; }
+  .timeline-item .body .what {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--fg-dim);
+    display: block;
+    margin-top: 3px;
+    letter-spacing: 0.04em;
+  }
+
+  /* UI MOCKUP (simplified) */
+  .ui-mock {
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    background: var(--bg-elev);
+    overflow: hidden;
+  }
+  .ui-mock-bar {
+    padding: 12px 20px;
+    background: var(--bg-elev-2);
+    border-bottom: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--fg-muted);
+    letter-spacing: 0.06em;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .ui-mock-bar strong { color: var(--fg); font-weight: 500; }
+  .ui-mock-bar .dots { display: flex; gap: 6px; }
+  .ui-mock-bar .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--line-strong); }
+  .ui-body {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    min-height: 460px;
+  }
+  .ui-sidebar {
+    border-right: 1px solid var(--line);
+    padding: 22px 18px;
+    background: var(--bg-elev);
+  }
+  .ui-sidebar .group { margin-bottom: 24px; }
+  .ui-sidebar .group h5 {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--fg-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .ui-sidebar .item {
+    padding: 6px 10px;
+    font-size: 12.5px;
+    color: var(--fg-muted);
+    margin: 1px -10px;
+    border-radius: 3px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .ui-sidebar .item .count {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--fg-dim);
+  }
+  .ui-sidebar .item.active { background: var(--accent-soft); color: var(--accent); }
+  .ui-sidebar .item.active .count { color: var(--accent); }
+
+  .ui-main { padding: 28px 32px; }
+  .ui-main .greeting {
+    font-size: 13px; color: var(--fg-dim); margin-bottom: 4px;
+    font-family: var(--mono); letter-spacing: 0.04em;
+  }
+  .ui-main .title { font-size: 20px; color: var(--fg); font-weight: 500; margin-bottom: 26px; letter-spacing: -0.005em; }
+
+  .priority {
+    padding: 18px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .priority:last-of-type { border-bottom: none; }
+  .priority .heading {
+    display: flex; align-items: baseline; gap: 10px;
+    margin-bottom: 5px;
+  }
+  .priority .num {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--fg-dim);
+    letter-spacing: 0.08em;
+  }
+  .priority .t { font-size: 14px; color: var(--fg); font-weight: 500; flex: 1; line-height: 1.35; }
+  .priority .tag-kr {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--fg-dim);
+    letter-spacing: 0.04em;
+    text-transform: none;
+  }
+  .priority .sig {
+    font-size: 12.5px;
+    color: var(--fg-dim);
+    line-height: 1.5;
+    margin-left: 26px;
+    margin-bottom: 10px;
+  }
+  .priority .proposed {
+    margin-left: 26px;
+    padding: 10px 12px;
+    background: var(--bg-elev-2);
+    border-left: 2px solid var(--accent);
+    border-radius: 2px;
+    font-size: 12.5px;
+    color: var(--fg);
+    line-height: 1.55;
+  }
+  .priority .proposed .label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .priority .actions {
+    margin-top: 8px;
+    display: flex; gap: 6px; flex-wrap: wrap;
+    font-family: var(--mono);
+    font-size: 10.5px;
+  }
+  .priority .actions span {
+    padding: 3px 8px;
+    border: 1px solid var(--line-strong);
+    border-radius: 2px;
+    color: var(--fg-muted);
+  }
+  .priority .actions span.primary {
+    color: var(--accent);
+    border-color: rgba(103, 232, 249, 0.35);
+    background: var(--accent-soft);
+  }
+
+  .connect-cta {
+    margin-top: 24px;
+    padding: 16px 18px;
+    background: var(--bg-elev-2);
+    border-left: 2px solid var(--accent);
+    border-radius: 2px;
+    font-size: 13px;
+    color: var(--fg);
+    line-height: 1.55;
+  }
+  .connect-cta .label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .connect-cta .who {
+    color: var(--fg);
+    font-weight: 500;
+  }
+  .connect-cta .role {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--fg-dim);
+  }
+  .connect-cta .body { color: var(--fg-muted); font-size: 12.5px; margin-top: 4px; }
+  .connect-cta .actions {
+    margin-top: 10px;
+    display: flex; gap: 6px; flex-wrap: wrap;
+    font-family: var(--mono);
+    font-size: 10.5px;
+  }
+  .connect-cta .actions span {
+    padding: 3px 8px;
+    border: 1px solid var(--line-strong);
+    border-radius: 2px;
+    color: var(--fg-muted);
+  }
+  .connect-cta .actions span.primary {
+    color: var(--accent);
+    border-color: rgba(103, 232, 249, 0.35);
+    background: var(--accent-soft);
+  }
+
+  /* CROSS-ORG (§5) */
+  .cross-grid {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .cross-card {
+    padding: 22px 24px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--bg-elev);
+  }
+  .cross-card .kicker {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+  .cross-card .line {
+    font-size: 14px; color: var(--fg);
+    line-height: 1.55; margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .cross-card .desc {
+    font-size: 12.5px; color: var(--fg-muted); line-height: 1.55;
+  }
+
+  /* OPEN QUESTIONS (§6) */
+  .oq {
+    margin-top: 24px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--bg-elev);
+    overflow: hidden;
+  }
+  .oq-row {
+    padding: 22px 28px;
+    border-bottom: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  .oq-row:last-child { border-bottom: none; }
+  .oq-row .tagcol { padding-top: 2px; }
+  .oq-row h3 {
+    font-size: 14px; color: var(--fg); margin-bottom: 6px; font-weight: 500;
+  }
+  .oq-row p {
+    font-size: 13px; color: var(--fg-muted); margin: 0; max-width: 740px;
+  }
+  .oq-row .blocker {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--red);
+    padding: 2px 6px;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: 2px;
+  }
+  .oq-row .phil {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fg-dim);
+    padding: 2px 6px;
+    border: 1px solid var(--line-strong);
+    border-radius: 2px;
+  }
+
+  footer {
+    padding: 36px 48px 52px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    color: var(--fg-dimmer);
+    border-top: 1px solid var(--line);
+  }
+
+  @media (max-width: 1024px) {
+    .section, .doc-header, .toc { padding-left: 28px; padding-right: 28px; }
+    .src-row { grid-template-columns: 1fr; gap: 10px; }
+    .ui-body { grid-template-columns: 1fr; }
+    .ui-sidebar { border-right: none; border-bottom: 1px solid var(--line); }
+    .cross-grid { grid-template-columns: 1fr; }
+    .stage-notes { grid-template-columns: 1fr 1fr; }
+    h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">INTELLIGENCE LAYER <span class="dim">· implementation notes · v0.4</span></div>
+    <nav>
+      <a href="#integrations">§1</a>
+      <a href="#pipeline">§2</a>
+      <a href="#journey">§3</a>
+      <a href="#crossorg">§4</a>
+      <a href="#open">§5</a>
+    </nav>
+  </div>
+</div>
+
+<div class="doc-header">
+  <div class="doc-meta">
+    <span class="status">WORKING DRAFT</span>
+    <span>Luke Valadie · Software Engineer</span>
+    <span>Apr 19, 2026</span>
+    <span>v0.4</span>
+  </div>
+  <h1>Intelligence Layer — implementation notes</h1>
+  <div class="doc-subtitle">
+    Per-source integration feasibility, pipeline shape, a walkthrough of the logged-in experience, cross-org collaboration surfaces.
+  </div>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <ul class="toc-list">
+    <li><span class="num">§1</span><a href="#integrations">Integration feasibility</a><span class="page">·</span></li>
+    <li><span class="num">§2</span><a href="#pipeline">Data pipeline</a><span class="page">·</span></li>
+    <li><span class="num">§3</span><a href="#journey">Monday morning</a><span class="page">·</span></li>
+    <li><span class="num">§4</span><a href="#crossorg">Cross-org collaboration</a><span class="page">·</span></li>
+    <li><span class="num">§5</span><a href="#open">Open questions</a><span class="page">·</span></li>
+  </ul>
+</div>
+
+<!-- ========================================================== -->
+<!-- §2 INTEGRATIONS -->
+<section class="section" id="integrations">
+  <div class="section-label">§1 · Integration feasibility</div>
+  <h2>What we pull in, and what it becomes on the way out.</h2>
+  <p>
+    Sources on the left, the alignment graph in the middle, user-facing surfaces on the right. Color on each left-side arrow is the cost to stand that integration up. The right side is what the graph makes possible once sources are connected.
+  </p>
+
+  <div class="int-diagram">
+    <svg class="int-svg" viewBox="0 0 1060 490" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <marker id="a-g" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#22c55e"/></marker>
+        <marker id="a-y" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#eab308"/></marker>
+        <marker id="a-r" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#ef4444"/></marker>
+        <marker id="a-d" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#5a5c65"/></marker>
+      </defs>
+
+      <!-- column headers -->
+      <text x="90" y="26" text-anchor="middle" class="col">Sources</text>
+      <text x="500" y="26" text-anchor="middle" class="col">Alignment Graph</text>
+      <text x="880" y="26" text-anchor="middle" class="col">Surfaces</text>
+
+      <!-- SOURCES (left col) -->
+      <g>
+        <rect class="box" x="20" y="60" width="140" height="40" rx="3"/>
+        <text x="90" y="85" text-anchor="middle" class="node">HubSpot</text>
+
+        <rect class="box" x="20" y="115" width="140" height="40" rx="3"/>
+        <text x="90" y="140" text-anchor="middle" class="node">Zoom</text>
+
+        <rect class="box" x="20" y="170" width="140" height="40" rx="3"/>
+        <text x="90" y="195" text-anchor="middle" class="node">Google Drive</text>
+
+        <rect class="box" x="20" y="225" width="140" height="40" rx="3"/>
+        <text x="90" y="250" text-anchor="middle" class="node">Gmail</text>
+
+        <rect class="box" x="20" y="280" width="140" height="40" rx="3"/>
+        <text x="90" y="305" text-anchor="middle" class="node">Google Chat</text>
+
+        <rect class="box" x="20" y="335" width="140" height="40" rx="3"/>
+        <text x="90" y="360" text-anchor="middle" class="node">Bespoke Hub</text>
+
+        <rect class="box muted" x="20" y="390" width="140" height="40" rx="3"/>
+        <text x="90" y="415" text-anchor="middle" class="node" fill="#828590">Monday</text>
+        <text x="90" y="447" text-anchor="middle" class="edge">deprecating</text>
+      </g>
+
+      <!-- Hub box -->
+      <rect class="box hub" x="390" y="180" width="220" height="110" rx="4"/>
+      <text x="500" y="222" text-anchor="middle" class="node" font-size="14">World Model +</text>
+      <text x="500" y="244" text-anchor="middle" class="node" font-size="14">Alignment Graph</text>
+      <text x="500" y="270" text-anchor="middle" class="edge" fill="#67e8f9">derived from events</text>
+
+      <!-- source → hub arrows -->
+      <path class="arrow green" d="M160,80 C250,80 330,190 390,215" marker-end="url(#a-g)"/>
+      <path class="arrow green" d="M160,135 C240,135 320,200 390,225" marker-end="url(#a-g)"/>
+      <path class="arrow yellow" d="M160,190 C240,190 330,215 390,232" marker-end="url(#a-y)"/>
+      <path class="arrow yellow" d="M160,245 C240,245 330,250 390,245" marker-end="url(#a-y)"/>
+      <path class="arrow red" d="M160,300 C240,300 330,270 390,256" marker-end="url(#a-r)"/>
+      <path class="arrow green" d="M160,355 C240,355 330,300 390,268" marker-end="url(#a-g)"/>
+
+      <!-- SURFACES (right col) -->
+      <g>
+        <rect class="box" x="720" y="60" width="320" height="52" rx="3"/>
+        <text x="880" y="80" text-anchor="middle" class="node">Morning brief</text>
+        <text x="880" y="100" text-anchor="middle" class="sub" fill="#828590">priorities, drift, open gaps</text>
+
+        <rect class="box" x="720" y="130" width="320" height="52" rx="3"/>
+        <text x="880" y="150" text-anchor="middle" class="node">Query</text>
+        <text x="880" y="170" text-anchor="middle" class="sub" fill="#828590">ask the graph, get cited answers</text>
+
+        <rect class="box" x="720" y="200" width="320" height="52" rx="3"/>
+        <text x="880" y="220" text-anchor="middle" class="node">People connections</text>
+        <text x="880" y="240" text-anchor="middle" class="sub" fill="#828590">adjacent work, expertise, capacity</text>
+
+        <rect class="box" x="720" y="270" width="320" height="52" rx="3"/>
+        <text x="880" y="290" text-anchor="middle" class="node">Meeting → commit</text>
+        <text x="880" y="310" text-anchor="middle" class="sub" fill="#828590">transcript becomes graph writes</text>
+
+        <rect class="box" x="720" y="340" width="320" height="52" rx="3"/>
+        <text x="880" y="360" text-anchor="middle" class="node">Cross-org routing</text>
+        <text x="880" y="380" text-anchor="middle" class="sub" fill="#828590">surfacing across tenants</text>
+      </g>
+
+      <!-- hub → surfaces arrows -->
+      <path class="arrow out" d="M610,205 C660,205 680,85 720,85" marker-end="url(#a-d)"/>
+      <path class="arrow out" d="M610,220 C660,220 680,155 720,155" marker-end="url(#a-d)"/>
+      <path class="arrow out" d="M610,235 L720,225" marker-end="url(#a-d)"/>
+      <path class="arrow out" d="M610,260 C660,260 680,295 720,295" marker-end="url(#a-d)"/>
+      <path class="arrow out" d="M610,275 C660,275 680,365 720,365" marker-end="url(#a-d)"/>
+    </svg>
+
+    <div class="tier-legend">
+      <span><span class="swatch g"></span>Green · standard OAuth, ships in weeks</span>
+      <span><span class="swatch y"></span>Yellow · admin config (DWD), scope policy decision</span>
+      <span><span class="swatch r"></span>Red · architecturally constrained (Gchat)</span>
+    </div>
+  </div>
+
+  <div class="src-table">
+    <div class="src-row">
+      <div class="name">HubSpot<span class="kind">CRM</span></div>
+      <div><span class="tag green">Green</span></div>
+      <div class="body">REST + webhooks. Deal stages, owner changes, notes, campaign events. Feeds revenue-linked KRs and pipeline context in queries.</div>
+    </div>
+    <div class="src-row">
+      <div class="name">Zoom<span class="kind">Meetings</span></div>
+      <div><span class="tag green">Green</span></div>
+      <div class="body">Server-to-Server OAuth. Cloud recording is already on, so we get VTT transcripts via <code>recording.completed</code>. Primary fuel for meeting → commit.</div>
+    </div>
+    <div class="src-row">
+      <div class="name">Google Drive<span class="kind">Files</span></div>
+      <div><span class="tag yellow">Yellow</span></div>
+      <div class="body">Service account + domain-wide delegation. Internal consent screen — no Google review. Local super-admin lift only. Open question is folder allowlist, not auth.</div>
+    </div>
+    <div class="src-row">
+      <div class="name">Gmail<span class="kind">Email</span></div>
+      <div><span class="tag yellow">Yellow</span></div>
+      <div class="body">Same auth path as Drive. Technical cost is low; the real cost is scope policy. Recommended v1: shared aliases plus threads with 2+ internal addresses.</div>
+    </div>
+    <div class="src-row">
+      <div class="name">Google Chat<span class="kind">Chat</span></div>
+      <div><span class="tag red">Red</span></div>
+      <div class="body">No admin-wide install; bots can't see human DMs. Two real options — Vault API batch export (Enterprise tier) or opt-in bot in a handful of decision-bearing spaces. This choice gates real-time vs mixed-cadence pipeline.</div>
+    </div>
+    <div class="src-row">
+      <div class="name">Bespoke Hub<span class="kind">Internal</span></div>
+      <div><span class="tag green">Green</span></div>
+      <div class="body">We own it — emits events directly into the pipeline. Backbone of the graph (KR tree, tasks, ownership). v1 surface: KR tree + capacity board + task table.</div>
+    </div>
+    <div class="src-row muted">
+      <div class="name">Monday<span class="kind">Legacy</span></div>
+      <div><span class="tag gray">Gray</span></div>
+      <div class="body">Replaced by the hub. Data migrates at cutover, not via an integration.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================== -->
+<!-- §3 PIPELINE -->
+<section class="section" id="pipeline">
+  <div class="section-label">§2 · Data pipeline</div>
+  <h2>How the sources connect to the surfaces.</h2>
+  <p>
+    A thin adapter per source normalizes events onto a shared stream. Everything downstream — graph, brief, query, commit extractor — reads from that stream, so sources and surfaces stay decoupled.
+  </p>
+
+  <div class="pipeline-wrap">
+    <svg class="pipeline-svg" viewBox="0 0 1000 340" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;">
+      <defs>
+        <marker id="pl-arr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#5a5c65"/></marker>
+        <marker id="pl-arr-c" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#67e8f9"/></marker>
+      </defs>
+
+      <!-- stage dividers -->
+      <line class="divider" x1="190" y1="50" x2="190" y2="300"/>
+      <line class="divider" x1="400" y1="50" x2="400" y2="300"/>
+      <line class="divider" x1="610" y1="50" x2="610" y2="300"/>
+      <line class="divider" x1="800" y1="50" x2="800" y2="300"/>
+
+      <!-- stage labels -->
+      <text x="95" y="36" text-anchor="middle" class="stage">Sources</text>
+      <text x="295" y="36" text-anchor="middle" class="stage">Adapters</text>
+      <text x="505" y="36" text-anchor="middle" class="stage">Event stream + store</text>
+      <text x="705" y="36" text-anchor="middle" class="stage">Graph</text>
+      <text x="900" y="36" text-anchor="middle" class="stage">Surfaces</text>
+
+      <!-- sources grouped -->
+      <g>
+        <rect class="box" x="30" y="120" width="130" height="100" rx="3" fill="#17171d" stroke="#2a2a33"/>
+        <text x="95" y="145" text-anchor="middle" class="sub">hubspot</text>
+        <text x="95" y="163" text-anchor="middle" class="sub">zoom</text>
+        <text x="95" y="181" text-anchor="middle" class="sub">drive · gmail</text>
+        <text x="95" y="199" text-anchor="middle" class="sub">gchat · hub</text>
+      </g>
+
+      <!-- adapters -->
+      <g>
+        <rect class="box" x="220" y="120" width="150" height="100" rx="3"/>
+        <text x="295" y="155" text-anchor="middle" class="node">Adapter (×6)</text>
+        <text x="295" y="180" text-anchor="middle" class="sub">normalize · emit</text>
+        <text x="295" y="198" text-anchor="middle" class="sub">webhook or poll</text>
+      </g>
+
+      <!-- stream + store -->
+      <g>
+        <rect class="box key" x="430" y="110" width="160" height="55" rx="3"/>
+        <text x="510" y="135" text-anchor="middle" class="node">Event stream</text>
+        <text x="510" y="152" text-anchor="middle" class="sub">append-only, idempotent</text>
+
+        <rect class="box" x="430" y="185" width="160" height="55" rx="3"/>
+        <text x="510" y="210" text-anchor="middle" class="node">Event store</text>
+        <text x="510" y="227" text-anchor="middle" class="sub">replayable history</text>
+      </g>
+
+      <!-- graph -->
+      <g>
+        <rect class="box key" x="630" y="140" width="150" height="70" rx="3"/>
+        <text x="705" y="168" text-anchor="middle" class="node">Graph</text>
+        <text x="705" y="186" text-anchor="middle" class="sub">typed nodes + edges</text>
+        <text x="705" y="202" text-anchor="middle" class="sub">derived from events</text>
+      </g>
+
+      <!-- surfaces -->
+      <g>
+        <rect class="box" x="820" y="80" width="160" height="38" rx="3"/>
+        <text x="900" y="103" text-anchor="middle" class="node">Brief</text>
+
+        <rect class="box" x="820" y="130" width="160" height="38" rx="3"/>
+        <text x="900" y="153" text-anchor="middle" class="node">Query</text>
+
+        <rect class="box" x="820" y="180" width="160" height="38" rx="3"/>
+        <text x="900" y="203" text-anchor="middle" class="node">Commit extractor</text>
+
+        <rect class="box" x="820" y="230" width="160" height="38" rx="3"/>
+        <text x="900" y="253" text-anchor="middle" class="node">Connection router</text>
+      </g>
+
+      <!-- arrows -->
+      <path class="arrow" d="M160,170 L220,170" marker-end="url(#pl-arr)"/>
+      <path class="arrow" d="M370,170 L430,138" marker-end="url(#pl-arr)"/>
+      <path class="arrow" d="M510,165 L510,185" marker-end="url(#pl-arr)"/>
+      <path class="arrow" d="M590,165 L630,170" marker-end="url(#pl-arr)"/>
+
+      <!-- graph → surfaces -->
+      <path class="arrow" d="M780,165 C800,165 805,99 820,99" marker-end="url(#pl-arr)"/>
+      <path class="arrow" d="M780,175 L820,149" marker-end="url(#pl-arr)"/>
+      <path class="arrow" d="M780,185 L820,199" marker-end="url(#pl-arr)"/>
+      <path class="arrow" d="M780,200 C800,200 805,249 820,249" marker-end="url(#pl-arr)"/>
+
+      <!-- commit loop back -->
+      <path class="arrow loop" d="M820,199 C700,290 580,290 510,240" marker-end="url(#pl-arr-c)"/>
+      <text x="660" y="298" text-anchor="middle" class="sub" fill="#67e8f9">reviewed commits emit new events</text>
+    </svg>
+  </div>
+
+  <div class="stage-notes">
+    <div class="stage-note">
+      <div class="name">Adapters</div>
+      <div class="detail">One per source. Webhook-first, polling where the source doesn't push. Knows nothing about downstream.</div>
+    </div>
+    <div class="stage-note">
+      <div class="name">Event stream</div>
+      <div class="detail">Shared append-only log. Deterministic IDs — idempotent re-ingest. The integration seam.</div>
+    </div>
+    <div class="stage-note">
+      <div class="name">Event store</div>
+      <div class="detail">Replayable. Graph is derived state; change the derivation, replay the store to rebuild.</div>
+    </div>
+    <div class="stage-note">
+      <div class="name">Graph</div>
+      <div class="detail">Typed nodes (KR, task, doc, meeting, decision, person) and typed edges. State derived on write.</div>
+    </div>
+    <div class="stage-note">
+      <div class="name">Surfaces</div>
+      <div class="detail">Readers over the graph. Commit extractor is the only one that writes back — closing the loop.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================== -->
+<!-- §4 USER JOURNEY -->
+<section class="section" id="journey">
+  <div class="section-label">§3 · Monday morning</div>
+  <h2>What it looks like when you log on.</h2>
+  <p>
+    Overnight, adapters ingest and the brief generator composes. By 8 a.m., the layer has drafted proposed next steps for each priority — outlines, messages, decision options — and surfaced adjacent work from other orgs. The user's job is taste: approve, edit, or redirect. The system does the legwork.
+  </p>
+
+  <div class="journey">
+    <div class="timeline">
+      <h4>Overnight &amp; morning</h4>
+
+      <div class="timeline-item">
+        <div class="time">04:00</div>
+        <div class="marker"></div>
+        <div class="body">
+          Adapters run. Weekend Drive edits, Gmail threads, HubSpot events, Friday Zoom transcripts all land on the stream.
+          <span class="what">all sources → event stream</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="time">04:15</div>
+        <div class="marker"></div>
+        <div class="body">
+          Commit extractor processes Friday's meetings — decisions, actions, open questions parsed from transcripts into proposed graph writes, queued for your review.
+          <span class="what">extractor → proposed queue</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="time">07:30</div>
+        <div class="marker"></div>
+        <div class="body">
+          Brief generator runs. For each priority, it drafts a proposed next step — an outline, a message, a decision memo — grounded in graph context. Connection router checks for adjacent work across tenants; Sara Chen's chatbot essay-feedback work matches two of your open questions.
+          <span class="what">brief + router → proposed actions</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="time">08:00</div>
+        <div class="marker"></div>
+        <div class="body">
+          You open the hub. Three priorities, each with a proposed action ready to approve, edit, or redirect. Sara's cross-org work is flagged inline on the guidebook task.
+          <span class="what">hub UI composition</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="time">08:30</div>
+        <div class="marker"></div>
+        <div class="body">
+          You approve the guidebook outline as drafted, edit the GradBloom options to reframe the second one, and send the drafted Slack to Tomas. Accept the intro to Sara — layer schedules Wed 2pm.
+          <span class="what">taste applied → actions fire</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ui-mock">
+      <div class="ui-mock-bar">
+        <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+        <span><strong>Prepory Hub</strong> · Mon Apr 20</span>
+        <span>Luke V.</span>
+      </div>
+      <div class="ui-body">
+        <div class="ui-sidebar">
+          <div class="group">
+            <h5>Today</h5>
+            <div class="item active">Brief<span class="count">3</span></div>
+            <div class="item">Proposed commits<span class="count">4</span></div>
+            <div class="item">Ask…</div>
+          </div>
+          <div class="group">
+            <h5>Your work</h5>
+            <div class="item">Objectives<span class="count">11</span></div>
+            <div class="item">Drift<span class="count">2</span></div>
+          </div>
+          <div class="group">
+            <h5>People</h5>
+            <div class="item">Adjacent work<span class="count">2</span></div>
+            <div class="item">Cross-org</div>
+          </div>
+        </div>
+
+        <div class="ui-main">
+          <div class="greeting">Mon · Apr 20 · 08:00</div>
+          <div class="title">Good morning, Luke.</div>
+
+          <div class="priority">
+            <div class="heading">
+              <span class="num">01</span>
+              <span class="t">Draft the AI Guidebook for the full-time team.</span>
+            </div>
+            <div class="sig">FT training starts May 4. Twelve working days left. No draft artifact in Drive yet; four KRs downstream (FT training, PT training, rollout, audit) are waiting on it.</div>
+            <div class="proposed">
+              <span class="label">Proposed — review &amp; approve</span>
+              I drafted a six-chapter outline from the Apr 14 decision to lead with Claude, your Q1 Claude/GPT comparison doc, and the chatbot v2 rubric. Chapter 3 (eval method) pulls from Sara's N2Growth work — flagged for your review since it crosses orgs.
+              <div class="actions">
+                <span class="primary">Open outline</span>
+                <span>Generate full draft</span>
+                <span>Start over</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="priority">
+            <div class="heading">
+              <span class="num">02</span>
+              <span class="t">Lock the confidentiality posture for GradBloom session-notes automation.</span>
+            </div>
+            <div class="sig">Pilot coaches onboarding Wed. Drafting isn't the blocker — the confidentiality call is. Jess flagged it in the Apr 17 planning meeting; no decision logged since.</div>
+            <div class="proposed">
+              <span class="label">Proposed — review &amp; approve</span>
+              Based on the Mar 28 enrollment decision on student-data handling, I drafted two options (redacted-by-default vs coach-opt-in) with a two-paragraph rationale. Scheduled 15 min with Jess Tue 10am — decision memo ready to send after.
+              <div class="actions">
+                <span class="primary">Review draft</span>
+                <span>Send to Jess</span>
+                <span>Edit options</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="priority">
+            <div class="heading">
+              <span class="num">03</span>
+              <span class="t">Resolve transcript-audit cadence with Enrollment.</span>
+            </div>
+            <div class="sig">Surfaced in Apr 16 standup, unowned. The rubric is finalized — the gap is cadence and ownership.</div>
+            <div class="proposed">
+              <span class="label">Proposed — review &amp; approve</span>
+              Enrollment volume points to a weekly sample of ten. Drafted a Slack to Tomas proposing he own the cadence with that baseline, citing the Apr 16 standup and the final rubric.
+              <div class="actions">
+                <span class="primary">Send to Tomas</span>
+                <span>Edit message</span>
+                <span>Suggest different owner</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="connect-cta">
+            <span class="label">Adjacent work · cross-org</span>
+            <span class="who">Sara Chen</span> <span class="role">· Director of Product, N2Growth</span>
+            <div class="body">
+              Shipped chatbot essay-feedback in Q1 — logged three decisions (Feb 3 rubric, Mar 9 confidence scoring, Mar 22 false-positive handling) and has a working eval harness. Her open question this week: how to score partial-credit responses — the same question surfaced in your chatbot v2 thread Apr 10.
+              <div class="actions">
+                <span class="primary">See her decisions</span>
+                <span>Draft intro</span>
+                <span>Schedule 15 min</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================== -->
+<!-- §5 CROSS-ORG COLLABORATION -->
+<section class="section" id="crossorg">
+  <div class="section-label">§4 · Cross-org collaboration</div>
+  <h2>Cross-org collaboration surfaces.</h2>
+  <p>
+    The graph primitives that connect a KR to a Zoom decision also connect a person at Prepory to a person at N2Growth working the same problem. For anyone whose account spans orgs, this is the primary use case, not an extension.
+  </p>
+
+  <div class="cross-grid">
+    <div class="cross-card">
+      <div class="kicker">Adjacent work</div>
+      <div class="line">Surfacing parallel efforts across tenants.</div>
+      <div class="desc">Luke is drafting a chatbot essay-feedback rubric at Prepory; Sara shipped one at N2Growth last quarter. The brief surfaces Sara's decisions and eval harness to Luke, and flags Luke's open questions to Sara.</div>
+    </div>
+
+    <div class="cross-card">
+      <div class="kicker">Precedent</div>
+      <div class="line">Prior decisions reused in-context.</div>
+      <div class="desc">Deans of Admissions resolved an essay-rubric question in March. When the same thread opens at Prepory, the prior decision surfaces with its rationale and owner — visible before anyone searches for it.</div>
+    </div>
+
+    <div class="cross-card">
+      <div class="kicker">Capacity</div>
+      <div class="line">Matching free capacity to blocked work.</div>
+      <div class="desc">A coach at Prepory has capacity this week. An N2Growth team is blocked on something coachable. The match is a graph query — both sides see the suggestion with enough context to opt in or pass.</div>
+    </div>
+
+    <div class="cross-card">
+      <div class="kicker">Expertise</div>
+      <div class="line">Locating the person who's done it before.</div>
+      <div class="desc">Asking "who's shipped this before" returns a person and the artifact that proves it. Crosses org boundaries by default for users whose accounts span orgs; stays in-org for everyone else.</div>
+    </div>
+  </div>
+
+  <p class="note" style="margin-top: 22px;">
+    The data-boundary decision — what surfaces across tenants and what stays in-org — sits upstream of this product, not downstream. Worth a separate conversation; named here because the schema choices happen now.
+  </p>
+</section>
+
+<!-- ========================================================== -->
+<!-- §6 OPEN QUESTIONS -->
+<section class="section" id="open">
+  <div class="section-label">§5 · Open questions</div>
+  <h2>What's worth deciding together.</h2>
+
+  <div class="oq">
+    <div class="oq-row">
+      <div class="tagcol"><span class="blocker">Blocker</span></div>
+      <div>
+        <h3>Is Google Chat in v1?</h3>
+        <p>Vault export (Enterprise tier, batch) vs opt-in bot in key spaces (real-time, partial) vs defer. This changes whether the pipeline is real-time end-to-end, which in turn changes what the brief can show.</p>
+      </div>
+    </div>
+
+    <div class="oq-row">
+      <div class="tagcol"><span class="phil">Philosophy</span></div>
+      <div>
+        <h3>What counts as a "connection" worth surfacing?</h3>
+        <p>Sharing the same KR tag is easy but noisy. Semantic adjacency is powerful but opaque. If people stop trusting the people-connection surface, the whole cross-org premise falls apart — so the bar has to be high from day one.</p>
+      </div>
+    </div>
+
+    <div class="oq-row">
+      <div class="tagcol"><span class="phil">Philosophy</span></div>
+      <div>
+        <h3>What crosses an org boundary, and who chooses?</h3>
+        <p>Decisions, yes. KR titles, probably. Open questions, maybe. Raw documents, probably not. The default matters more than the override — it sets whether cross-org becomes the norm or the exception.</p>
+      </div>
+    </div>
+
+    <div class="oq-row">
+      <div class="tagcol"><span class="phil">Philosophy</span></div>
+      <div>
+        <h3>How do we handle the layer being wrong?</h3>
+        <p>The brief will mis-flag drift. The router will suggest bad matches. Trust erodes from false positives faster than it compounds from correct hits. The dispute primitive is a product question, not an ML one.</p>
+      </div>
+    </div>
+
+    <div class="oq-row">
+      <div class="tagcol"><span class="phil">Philosophy</span></div>
+      <div>
+        <h3>What does this displace, and for whom?</h3>
+        <p>If the brief replaces the routing-context work middle management currently does, the org has to decide what those humans do instead. Naming it here because it should shape the product — not be handled after the fact.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  working draft · v0.4 · prepared for internal discussion
+</footer>
+
+</body>
+</html>

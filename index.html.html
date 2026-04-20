@@ -524,6 +524,33 @@
     background: var(--accent-soft);
   }
 
+  /* shared: prompt + free-entry */
+  .ask {
+    margin-top: 10px;
+    font-size: 12.5px;
+    color: var(--fg);
+    line-height: 1.5;
+  }
+  .ask::before {
+    content: "↳ ";
+    color: var(--accent);
+    margin-right: 2px;
+  }
+  .freebox {
+    margin-top: 10px;
+    padding: 9px 12px;
+    background: var(--bg-elev);
+    border: 1px solid var(--line-strong);
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--fg-dimmer);
+  }
+  .freebox::before {
+    content: "› ";
+    color: var(--fg-dim);
+  }
+
   /* CROSS-ORG (§5) */
   .cross-grid {
     margin-top: 24px;
@@ -639,8 +666,6 @@
 
 <div class="doc-header">
   <div class="doc-meta">
-    <span class="status">WORKING DRAFT</span>
-    <span>Luke Valadie · Software Engineer</span>
     <span>Apr 19, 2026</span>
     <span>v0.4</span>
   </div>
@@ -667,7 +692,7 @@
   <div class="section-label">§1 · Integration feasibility</div>
   <h2>What we pull in, and what it becomes on the way out.</h2>
   <p>
-    Sources on the left, the alignment graph in the middle, user-facing surfaces on the right. Color on each left-side arrow is the cost to stand that integration up. The right side is what the graph makes possible once sources are connected.
+    External sources on the left, the hub in the middle, the capabilities it exposes on the right. Each source feeds into the hub; each capability reads from it. The color on each left-side arrow indicates how hard that source is to connect.
   </p>
 
   <div class="int-diagram">
@@ -680,9 +705,9 @@
       </defs>
 
       <!-- column headers -->
-      <text x="90" y="26" text-anchor="middle" class="col">Sources</text>
-      <text x="500" y="26" text-anchor="middle" class="col">Alignment Graph</text>
-      <text x="880" y="26" text-anchor="middle" class="col">Surfaces</text>
+      <text x="90" y="26" text-anchor="middle" class="col">External sources</text>
+      <text x="500" y="26" text-anchor="middle" class="col">Bespoke Hub</text>
+      <text x="880" y="26" text-anchor="middle" class="col">Capabilities</text>
 
       <!-- SOURCES (left col) -->
       <g>
@@ -701,19 +726,16 @@
         <rect class="box" x="20" y="280" width="140" height="40" rx="3"/>
         <text x="90" y="305" text-anchor="middle" class="node">Google Chat</text>
 
-        <rect class="box" x="20" y="335" width="140" height="40" rx="3"/>
-        <text x="90" y="360" text-anchor="middle" class="node">Bespoke Hub</text>
-
         <rect class="box muted" x="20" y="390" width="140" height="40" rx="3"/>
         <text x="90" y="415" text-anchor="middle" class="node" fill="#828590">Monday</text>
-        <text x="90" y="447" text-anchor="middle" class="edge">deprecating</text>
+        <text x="90" y="447" text-anchor="middle" class="edge">replaced by hub</text>
       </g>
 
       <!-- Hub box -->
       <rect class="box hub" x="390" y="180" width="220" height="110" rx="4"/>
-      <text x="500" y="222" text-anchor="middle" class="node" font-size="14">World Model +</text>
-      <text x="500" y="244" text-anchor="middle" class="node" font-size="14">Alignment Graph</text>
-      <text x="500" y="270" text-anchor="middle" class="edge" fill="#67e8f9">derived from events</text>
+      <text x="500" y="218" text-anchor="middle" class="node" font-size="14">Bespoke Hub</text>
+      <text x="500" y="244" text-anchor="middle" class="edge" fill="#67e8f9">world model + alignment graph</text>
+      <text x="500" y="266" text-anchor="middle" class="edge" fill="#828590">derived from events</text>
 
       <!-- source → hub arrows -->
       <path class="arrow green" d="M160,80 C250,80 330,190 390,215" marker-end="url(#a-g)"/>
@@ -721,7 +743,6 @@
       <path class="arrow yellow" d="M160,190 C240,190 330,215 390,232" marker-end="url(#a-y)"/>
       <path class="arrow yellow" d="M160,245 C240,245 330,250 390,245" marker-end="url(#a-y)"/>
       <path class="arrow red" d="M160,300 C240,300 330,270 390,256" marker-end="url(#a-r)"/>
-      <path class="arrow green" d="M160,355 C240,355 330,300 390,268" marker-end="url(#a-g)"/>
 
       <!-- SURFACES (right col) -->
       <g>
@@ -755,9 +776,9 @@
     </svg>
 
     <div class="tier-legend">
-      <span><span class="swatch g"></span>Green · standard OAuth, ships in weeks</span>
-      <span><span class="swatch y"></span>Yellow · admin config (DWD), scope policy decision</span>
-      <span><span class="swatch r"></span>Red · architecturally constrained (Gchat)</span>
+      <span><span class="swatch g"></span>Green · easy — straightforward to connect</span>
+      <span><span class="swatch y"></span>Yellow · medium — needs admin setup and a policy call on scope</span>
+      <span><span class="swatch r"></span>Red · hard — the platform itself limits what we can pull in</span>
     </div>
   </div>
 
@@ -765,32 +786,27 @@
     <div class="src-row">
       <div class="name">HubSpot<span class="kind">CRM</span></div>
       <div><span class="tag green">Green</span></div>
-      <div class="body">REST + webhooks. Deal stages, owner changes, notes, campaign events. Feeds revenue-linked KRs and pipeline context in queries.</div>
+      <div class="body">Contacts, deal stages, notes, and marketing events flow in as they happen. Feeds marketing/enrollment KRs.</div>
     </div>
     <div class="src-row">
       <div class="name">Zoom<span class="kind">Meetings</span></div>
       <div><span class="tag green">Green</span></div>
-      <div class="body">Server-to-Server OAuth. Cloud recording is already on, so we get VTT transcripts via <code>recording.completed</code>. Primary fuel for meeting → commit.</div>
+      <div class="body">Meeting transcripts come in automatically once the meeting ends. Primary fuel for meeting → commit.</div>
     </div>
     <div class="src-row">
       <div class="name">Google Drive<span class="kind">Files</span></div>
       <div><span class="tag yellow">Yellow</span></div>
-      <div class="body">Service account + domain-wide delegation. Internal consent screen — no Google review. Local super-admin lift only. Open question is folder allowlist, not auth.</div>
+      <div class="body">Requires a one-time admin setup on our side; no external review from Google. The open question is which folders are in scope, not whether we can connect.</div>
     </div>
     <div class="src-row">
       <div class="name">Gmail<span class="kind">Email</span></div>
       <div><span class="tag yellow">Yellow</span></div>
-      <div class="body">Same auth path as Drive. Technical cost is low; the real cost is scope policy. Recommended v1: shared aliases plus threads with 2+ internal addresses.</div>
+      <div class="body">Same admin setup as Drive. The harder call is policy, not plumbing — what emails should be in scope. Recommended v1: shared aliases and threads that include two or more internal addresses.</div>
     </div>
     <div class="src-row">
       <div class="name">Google Chat<span class="kind">Chat</span></div>
       <div><span class="tag red">Red</span></div>
-      <div class="body">No admin-wide install; bots can't see human DMs. Two real options — Vault API batch export (Enterprise tier) or opt-in bot in a handful of decision-bearing spaces. This choice gates real-time vs mixed-cadence pipeline.</div>
-    </div>
-    <div class="src-row">
-      <div class="name">Bespoke Hub<span class="kind">Internal</span></div>
-      <div><span class="tag green">Green</span></div>
-      <div class="body">We own it — emits events directly into the pipeline. Backbone of the graph (KR tree, tasks, ownership). v1 surface: KR tree + capacity board + task table.</div>
+      <div class="body">Google doesn't let us ingest private messages directly. Two real options — a bulk export that runs on a delay, or an opt-in bot in specific decision-bearing spaces. That choice is what decides whether the pipeline runs in real time or a mix of cadences.</div>
     </div>
     <div class="src-row muted">
       <div class="name">Monday<span class="kind">Legacy</span></div>
@@ -806,7 +822,7 @@
   <div class="section-label">§2 · Data pipeline</div>
   <h2>How the sources connect to the surfaces.</h2>
   <p>
-    A thin adapter per source normalizes events onto a shared stream. Everything downstream — graph, brief, query, commit extractor — reads from that stream, so sources and surfaces stay decoupled.
+    Each source has a small connector that turns what it produces — a doc edit, a meeting transcript, a deal update — into events on a shared stream. The hub reads from that stream and updates its graph. Everything the user sees (brief, query, meeting commits) reads from the graph.
   </p>
 
   <div class="pipeline-wrap">
@@ -823,11 +839,11 @@
       <line class="divider" x1="800" y1="50" x2="800" y2="300"/>
 
       <!-- stage labels -->
-      <text x="95" y="36" text-anchor="middle" class="stage">Sources</text>
+      <text x="95" y="36" text-anchor="middle" class="stage">External sources</text>
       <text x="295" y="36" text-anchor="middle" class="stage">Adapters</text>
       <text x="505" y="36" text-anchor="middle" class="stage">Event stream + store</text>
-      <text x="705" y="36" text-anchor="middle" class="stage">Graph</text>
-      <text x="900" y="36" text-anchor="middle" class="stage">Surfaces</text>
+      <text x="705" y="36" text-anchor="middle" class="stage">Hub</text>
+      <text x="900" y="36" text-anchor="middle" class="stage">Capabilities</text>
 
       <!-- sources grouped -->
       <g>
@@ -860,9 +876,9 @@
       <!-- graph -->
       <g>
         <rect class="box key" x="630" y="140" width="150" height="70" rx="3"/>
-        <text x="705" y="168" text-anchor="middle" class="node">Graph</text>
-        <text x="705" y="186" text-anchor="middle" class="sub">typed nodes + edges</text>
-        <text x="705" y="202" text-anchor="middle" class="sub">derived from events</text>
+        <text x="705" y="168" text-anchor="middle" class="node">Hub</text>
+        <text x="705" y="186" text-anchor="middle" class="sub">world model +</text>
+        <text x="705" y="202" text-anchor="middle" class="sub">alignment graph</text>
       </g>
 
       <!-- surfaces -->
@@ -912,12 +928,12 @@
       <div class="detail">Replayable. Graph is derived state; change the derivation, replay the store to rebuild.</div>
     </div>
     <div class="stage-note">
-      <div class="name">Graph</div>
-      <div class="detail">Typed nodes (KR, task, doc, meeting, decision, person) and typed edges. State derived on write.</div>
+      <div class="name">Hub</div>
+      <div class="detail">World model + alignment graph. Typed nodes (KR, task, doc, meeting, decision, person) and typed edges, derived on write.</div>
     </div>
     <div class="stage-note">
-      <div class="name">Surfaces</div>
-      <div class="detail">Readers over the graph. Commit extractor is the only one that writes back — closing the loop.</div>
+      <div class="name">Capabilities</div>
+      <div class="detail">Readers over the hub state. Commit extractor is the only one that writes back — closing the loop.</div>
     </div>
   </div>
 </section>
@@ -928,7 +944,7 @@
   <div class="section-label">§3 · Monday morning</div>
   <h2>What it looks like when you log on.</h2>
   <p>
-    Overnight, adapters ingest and the brief generator composes. By 8 a.m., the layer has drafted proposed next steps for each priority — outlines, messages, decision options — and surfaced adjacent work from other orgs. The user's job is taste: approve, edit, or redirect. The system does the legwork.
+    Overnight, adapters ingest and the brief generator composes. By 8 a.m., the layer has drafted proposed next steps for each priority — outlines, messages, decision options — and surfaced adjacent work from other orgs. The user's job is taste: approve, edit, or redirect.
   </p>
 
   <div class="journey">
@@ -957,7 +973,7 @@
         <div class="time">07:30</div>
         <div class="marker"></div>
         <div class="body">
-          Brief generator runs. For each priority, it drafts a proposed next step — an outline, a message, a decision memo — grounded in graph context. Connection router checks for adjacent work across tenants; Sara Chen's chatbot essay-feedback work matches two of your open questions.
+          Brief generator runs. For each priority, it drafts a proposed next step — a scoring pattern, a message, a decision memo — grounded in graph context. Connection router checks for adjacent work across orgs; Sara Fernandes at Deans of Admissions is building coach curriculum on the same essay topic you're refining in Rory.
           <span class="what">brief + router → proposed actions</span>
         </div>
       </div>
@@ -966,7 +982,7 @@
         <div class="time">08:00</div>
         <div class="marker"></div>
         <div class="body">
-          You open the hub. Three priorities, each with a proposed action ready to approve, edit, or redirect. Sara's cross-org work is flagged inline on the guidebook task.
+          You open the hub and see three priorities, each with a proposed action ready to approve, edit, or redirect. Sara's cross-org curriculum work is flagged inline on the Rory task.
           <span class="what">hub UI composition</span>
         </div>
       </div>
@@ -975,7 +991,7 @@
         <div class="time">08:30</div>
         <div class="marker"></div>
         <div class="body">
-          You approve the guidebook outline as drafted, edit the GradBloom options to reframe the second one, and send the drafted Slack to Tomas. Accept the intro to Sara — layer schedules Wed 2pm.
+          You approve the Rory scoring pattern, edit the GradBloom options to reframe the second one, and send the drafted message to Tomas. Accept the intro to Sara — layer schedules Wed 2pm.
           <span class="what">taste applied → actions fire</span>
         </div>
       </div>
@@ -1014,17 +1030,18 @@
           <div class="priority">
             <div class="heading">
               <span class="num">01</span>
-              <span class="t">Draft the AI Guidebook for the full-time team.</span>
+              <span class="t">Refine Rory's feedback on essay concluding paragraphs.</span>
             </div>
-            <div class="sig">FT training starts May 4. Twelve working days left. No draft artifact in Drive yet; four KRs downstream (FT training, PT training, rollout, audit) are waiting on it.</div>
+            <div class="sig">Coaches flagged weak conclusions in three pilot sessions last week; Rory's current rubric barely touches them. Two KRs (pilot satisfaction, Q2 rollout) are waiting on this.</div>
             <div class="proposed">
               <span class="label">Proposed — review &amp; approve</span>
-              I drafted a six-chapter outline from the Apr 14 decision to lead with Claude, your Q1 Claude/GPT comparison doc, and the chatbot v2 rubric. Chapter 3 (eval method) pulls from Sara's N2Growth work — flagged for your review since it crosses orgs.
+              I drafted a revised scoring pattern for concluding paragraphs, drawing on your Apr 10 thread, last week's coach feedback, and curriculum materials Sara Fernandes is building at Deans of Admissions on this exact topic.
+              <div class="ask">Would you like me to generate example scored essays to test the pattern, or open an intro to Sara so you can compare notes before finalizing?</div>
               <div class="actions">
-                <span class="primary">Open outline</span>
-                <span>Generate full draft</span>
-                <span>Start over</span>
+                <span class="primary">Generate test examples</span>
+                <span>Open intro to Sara</span>
               </div>
+              <div class="freebox">Tell me something else…</div>
             </div>
           </div>
 
@@ -1033,45 +1050,48 @@
               <span class="num">02</span>
               <span class="t">Lock the confidentiality posture for GradBloom session-notes automation.</span>
             </div>
-            <div class="sig">Pilot coaches onboarding Wed. Drafting isn't the blocker — the confidentiality call is. Jess flagged it in the Apr 17 planning meeting; no decision logged since.</div>
+            <div class="sig">Pilot coaches onboard Wednesday. Drafting isn't the blocker — the confidentiality call is. Jess flagged it in the Apr 17 planning meeting; no decision logged since.</div>
             <div class="proposed">
               <span class="label">Proposed — review &amp; approve</span>
-              Based on the Mar 28 enrollment decision on student-data handling, I drafted two options (redacted-by-default vs coach-opt-in) with a two-paragraph rationale. Scheduled 15 min with Jess Tue 10am — decision memo ready to send after.
+              Drawing on the Mar 28 enrollment decision on student-data handling, I drafted two options — redacted-by-default or coach-opt-in — with a short rationale for each.
+              <div class="ask">Would you like me to send both options to Jess now, or set up 15 minutes with her first?</div>
               <div class="actions">
-                <span class="primary">Review draft</span>
-                <span>Send to Jess</span>
-                <span>Edit options</span>
+                <span class="primary">Send options to Jess</span>
+                <span>Schedule 15 min</span>
               </div>
+              <div class="freebox">Tell me something else…</div>
             </div>
           </div>
 
           <div class="priority">
             <div class="heading">
               <span class="num">03</span>
-              <span class="t">Resolve transcript-audit cadence with Enrollment.</span>
+              <span class="t">Figure out who audits enrollment call transcripts, and how often.</span>
             </div>
-            <div class="sig">Surfaced in Apr 16 standup, unowned. The rubric is finalized — the gap is cadence and ownership.</div>
+            <div class="sig">Came up in the Apr 16 meeting and no one picked it up. The scoring criteria are done — the open question is who runs the audits and on what schedule.</div>
             <div class="proposed">
               <span class="label">Proposed — review &amp; approve</span>
-              Enrollment volume points to a weekly sample of ten. Drafted a Slack to Tomas proposing he own the cadence with that baseline, citing the Apr 16 standup and the final rubric.
+              Given current enrollment volume, a weekly sample of ten calls looks about right. I drafted a short message to Tomas asking him to take it on.
+              <div class="ask">Would you like me to send the message to Tomas, or suggest someone else?</div>
               <div class="actions">
                 <span class="primary">Send to Tomas</span>
-                <span>Edit message</span>
-                <span>Suggest different owner</span>
+                <span>Suggest someone else</span>
               </div>
+              <div class="freebox">Tell me something else…</div>
             </div>
           </div>
 
           <div class="connect-cta">
             <span class="label">Adjacent work · cross-org</span>
-            <span class="who">Sara Chen</span> <span class="role">· Director of Product, N2Growth</span>
+            <span class="who">Sara Fernandes</span> <span class="role">· Coach, Deans of Admissions</span>
             <div class="body">
-              Shipped chatbot essay-feedback in Q1 — logged three decisions (Feb 3 rubric, Mar 9 confidence scoring, Mar 22 false-positive handling) and has a working eval harness. Her open question this week: how to score partial-credit responses — the same question surfaced in your chatbot v2 thread Apr 10.
+              Building curriculum materials on essay concluding paragraphs for coaches at Deans of Admissions. Logged two decisions this quarter (Mar 14 framework, Apr 2 scoring tiers) and has draft example essays with annotations that overlap with what Rory needs.
+              <div class="ask">Would you like me to draft an intro to Sara so you can compare notes, or pull her curriculum into your draft first?</div>
               <div class="actions">
-                <span class="primary">See her decisions</span>
-                <span>Draft intro</span>
-                <span>Schedule 15 min</span>
+                <span class="primary">Draft intro</span>
+                <span>Pull in her curriculum</span>
               </div>
+              <div class="freebox">Tell me something else…</div>
             </div>
           </div>
         </div>
@@ -1086,26 +1106,26 @@
   <div class="section-label">§4 · Cross-org collaboration</div>
   <h2>Cross-org collaboration surfaces.</h2>
   <p>
-    The graph primitives that connect a KR to a Zoom decision also connect a person at Prepory to a person at N2Growth working the same problem. For anyone whose account spans orgs, this is the primary use case, not an extension.
+    The links that lead from a KR to a design decision about Rory also connect a person at Prepory to a person at Deans of Admissions working on a similar problem. For anyone whose account spans orgs, this could be a central use case of the orchestration layer.
   </p>
 
   <div class="cross-grid">
     <div class="cross-card">
       <div class="kicker">Adjacent work</div>
-      <div class="line">Surfacing parallel efforts across tenants.</div>
-      <div class="desc">Luke is drafting a chatbot essay-feedback rubric at Prepory; Sara shipped one at N2Growth last quarter. The brief surfaces Sara's decisions and eval harness to Luke, and flags Luke's open questions to Sara.</div>
+      <div class="line">Surfacing parallel efforts across orgs.</div>
+      <div class="desc">Luke is refining Rory's feedback on essay concluding paragraphs at Prepory. Sara Fernandes is building coach curriculum on the same topic at Deans of Admissions. The brief surfaces Sara's curriculum drafts and logged decisions to Luke, and flags Luke's open questions to Sara.</div>
     </div>
 
     <div class="cross-card">
-      <div class="kicker">Precedent</div>
-      <div class="line">Prior decisions reused in-context.</div>
-      <div class="desc">Deans of Admissions resolved an essay-rubric question in March. When the same thread opens at Prepory, the prior decision surfaces with its rationale and owner — visible before anyone searches for it.</div>
+      <div class="kicker">Shared infrastructure</div>
+      <div class="line">Workflows built once, reused across orgs.</div>
+      <div class="desc">N2Growth built an automated research workflow for executive-search briefs and thought-leadership pieces — pulling sources, summarizing, drafting. Prepory could use the same pattern for college-research briefs. Different content, same pipeline. The graph surfaces the existing workflow before Prepory builds a parallel one.</div>
     </div>
 
     <div class="cross-card">
       <div class="kicker">Capacity</div>
-      <div class="line">Matching free capacity to blocked work.</div>
-      <div class="desc">A coach at Prepory has capacity this week. An N2Growth team is blocked on something coachable. The match is a graph query — both sides see the suggestion with enough context to opt in or pass.</div>
+      <div class="line">Matching open time to stuck work.</div>
+      <div class="desc">A Prepory coach has a light week coming up. Someone at N2Growth is stuck on something they could help with. The hub shows the overlap to both sides — either can pick it up or pass.</div>
     </div>
 
     <div class="cross-card">
@@ -1114,10 +1134,6 @@
       <div class="desc">Asking "who's shipped this before" returns a person and the artifact that proves it. Crosses org boundaries by default for users whose accounts span orgs; stays in-org for everyone else.</div>
     </div>
   </div>
-
-  <p class="note" style="margin-top: 22px;">
-    The data-boundary decision — what surfaces across tenants and what stays in-org — sits upstream of this product, not downstream. Worth a separate conversation; named here because the schema choices happen now.
-  </p>
 </section>
 
 <!-- ========================================================== -->
@@ -1175,3 +1191,4 @@
 
 </body>
 </html>
+                                                

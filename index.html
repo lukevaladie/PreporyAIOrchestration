@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Intelligence Layer — implementation notes</title>
+<title>Intelligence layer implementation notes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -408,7 +408,14 @@
     font-size: 13px; color: var(--fg-dim); margin-bottom: 4px;
     font-family: var(--mono); letter-spacing: 0.04em;
   }
-  .ui-main .title { font-size: 20px; color: var(--fg); font-weight: 500; margin-bottom: 26px; letter-spacing: -0.005em; }
+  .ui-main .title { font-size: 20px; color: var(--fg); font-weight: 500; margin-bottom: 6px; letter-spacing: -0.005em; }
+  .ui-main .subtitle {
+    font-size: 12.5px;
+    color: var(--fg-dim);
+    line-height: 1.5;
+    margin-bottom: 24px;
+    max-width: 520px;
+  }
 
   .priority {
     padding: 18px 0;
@@ -433,6 +440,21 @@
     letter-spacing: 0.04em;
     text-transform: none;
   }
+  .priority .why {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 2px;
+    border: 1px solid var(--line-strong);
+    color: var(--fg-dim);
+    white-space: nowrap;
+  }
+  .priority .why.behind { color: var(--yellow); border-color: rgba(234, 179, 8, 0.35); background: rgba(234, 179, 8, 0.08); }
+  .priority .why.blocked { color: var(--red); border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.08); }
+  .priority .why.unowned { color: var(--fg-muted); border-color: var(--line-strong); background: var(--bg-elev); }
   .priority .sig {
     font-size: 12.5px;
     color: var(--fg-dim);
@@ -551,6 +573,82 @@
     color: var(--fg-dim);
   }
 
+  /* ASK view (§4 consultation) */
+  .ask-view { padding: 28px 34px 26px; }
+  .ask-q {
+    font-size: 14.5px;
+    color: var(--fg);
+    line-height: 1.5;
+    padding: 14px 18px;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--line);
+    border-left: 2px solid var(--fg-dim);
+    border-radius: 3px;
+    margin-bottom: 22px;
+  }
+  .ask-r {
+    padding: 18px 22px;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--line);
+    border-left: 2px solid var(--accent);
+    border-radius: 3px;
+  }
+  .ask-r .intro {
+    font-size: 13.5px;
+    color: var(--fg);
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+  .ask-r ul {
+    list-style: none;
+    margin: 0; padding: 0;
+  }
+  .ask-r li {
+    padding: 9px 0;
+    border-top: 1px solid var(--line);
+    font-size: 13px;
+    color: var(--fg);
+    line-height: 1.5;
+  }
+  .ask-r li:first-child { border-top: none; padding-top: 4px; }
+  .ask-r .date {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--accent);
+    margin-right: 10px;
+    letter-spacing: 0.04em;
+    min-width: 44px;
+  }
+  .ask-r .src {
+    display: block;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--fg-dim);
+    letter-spacing: 0.04em;
+    margin-top: 4px;
+    margin-left: 54px;
+  }
+  .ask-followup {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+  }
+  .ask-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .ask-chips span {
+    padding: 5px 11px;
+    border: 1px solid var(--line-strong);
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--fg-muted);
+  }
+
   /* CROSS-ORG (§5) */
   .cross-grid {
     margin-top: 24px;
@@ -592,40 +690,13 @@
   .oq-row {
     padding: 22px 28px;
     border-bottom: 1px solid var(--line);
-    display: grid;
-    grid-template-columns: 60px 1fr;
-    gap: 16px;
-    align-items: start;
   }
   .oq-row:last-child { border-bottom: none; }
-  .oq-row .tagcol { padding-top: 2px; }
   .oq-row h3 {
     font-size: 14px; color: var(--fg); margin-bottom: 6px; font-weight: 500;
   }
   .oq-row p {
     font-size: 13px; color: var(--fg-muted); margin: 0; max-width: 740px;
-  }
-  .oq-row .blocker {
-    display: inline-block;
-    font-family: var(--mono);
-    font-size: 9.5px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--red);
-    padding: 2px 6px;
-    border: 1px solid rgba(239, 68, 68, 0.35);
-    border-radius: 2px;
-  }
-  .oq-row .phil {
-    display: inline-block;
-    font-family: var(--mono);
-    font-size: 9.5px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--fg-dim);
-    padding: 2px 6px;
-    border: 1px solid var(--line-strong);
-    border-radius: 2px;
   }
 
   footer {
@@ -658,8 +729,9 @@
       <a href="#integrations">§1</a>
       <a href="#pipeline">§2</a>
       <a href="#journey">§3</a>
-      <a href="#crossorg">§4</a>
-      <a href="#open">§5</a>
+      <a href="#ask">§4</a>
+      <a href="#crossorg">§5</a>
+      <a href="#open">§6</a>
     </nav>
   </div>
 </div>
@@ -669,7 +741,7 @@
     <span>Apr 19, 2026</span>
     <span>v0.4</span>
   </div>
-  <h1>Intelligence Layer — implementation notes</h1>
+  <h1>Intelligence layer implementation notes</h1>
   <div class="doc-subtitle">
     Per-source integration feasibility, pipeline shape, a walkthrough of the logged-in experience, cross-org collaboration surfaces.
   </div>
@@ -681,8 +753,9 @@
     <li><span class="num">§1</span><a href="#integrations">Integration feasibility</a><span class="page">·</span></li>
     <li><span class="num">§2</span><a href="#pipeline">Data pipeline</a><span class="page">·</span></li>
     <li><span class="num">§3</span><a href="#journey">Monday morning</a><span class="page">·</span></li>
-    <li><span class="num">§4</span><a href="#crossorg">Cross-org collaboration</a><span class="page">·</span></li>
-    <li><span class="num">§5</span><a href="#open">Open questions</a><span class="page">·</span></li>
+    <li><span class="num">§4</span><a href="#ask">Ask the hub</a><span class="page">·</span></li>
+    <li><span class="num">§5</span><a href="#crossorg">Cross-org collaboration</a><span class="page">·</span></li>
+    <li><span class="num">§6</span><a href="#open">Additional design decisions</a><span class="page">·</span></li>
   </ul>
 </div>
 
@@ -786,12 +859,12 @@
     <div class="src-row">
       <div class="name">HubSpot<span class="kind">CRM</span></div>
       <div><span class="tag green">Green</span></div>
-      <div class="body">Contacts, deal stages, notes, and marketing events flow in as they happen. Feeds marketing/enrollment KRs.</div>
+      <div class="body">Contacts, deal stages, notes, and marketing events flow in as they happen. Feeds marketing/enrollment KRs. Robust API support.</div>
     </div>
     <div class="src-row">
       <div class="name">Zoom<span class="kind">Meetings</span></div>
       <div><span class="tag green">Green</span></div>
-      <div class="body">Meeting transcripts come in automatically once the meeting ends. Primary fuel for meeting → commit.</div>
+      <div class="body">Meeting transcripts come in automatically once the meeting ends. Primary fuel for meeting → commit. Robust API support.</div>
     </div>
     <div class="src-row">
       <div class="name">Google Drive<span class="kind">Files</span></div>
@@ -801,17 +874,17 @@
     <div class="src-row">
       <div class="name">Gmail<span class="kind">Email</span></div>
       <div><span class="tag yellow">Yellow</span></div>
-      <div class="body">Same admin setup as Drive. The harder call is policy, not plumbing — what emails should be in scope. Recommended v1: shared aliases and threads that include two or more internal addresses.</div>
+      <div class="body">Same admin setup as Drive. The harder call is policy, not implementation.</div>
     </div>
     <div class="src-row">
       <div class="name">Google Chat<span class="kind">Chat</span></div>
       <div><span class="tag red">Red</span></div>
-      <div class="body">Google doesn't let us ingest private messages directly. Two real options — a bulk export that runs on a delay, or an opt-in bot in specific decision-bearing spaces. That choice is what decides whether the pipeline runs in real time or a mix of cadences.</div>
+      <div class="body">Google doesn't let us ingest private messages at all via API. Admins can access DMs via Google Vault, but this is a compliance tool; it isn't designed for this kind of use case. A bot added to specific chat spaces can stream those conversations into the pipeline in real time.</div>
     </div>
     <div class="src-row muted">
       <div class="name">Monday<span class="kind">Legacy</span></div>
       <div><span class="tag gray">Gray</span></div>
-      <div class="body">Replaced by the hub. Data migrates at cutover, not via an integration.</div>
+      <div class="body">Replaced by the hub. Data migrates at transition time, not via an integration.</div>
     </div>
   </div>
 </section>
@@ -822,11 +895,11 @@
   <div class="section-label">§2 · Data pipeline</div>
   <h2>How the sources connect to the surfaces.</h2>
   <p>
-    Each source has a small connector that turns what it produces — a doc edit, a meeting transcript, a deal update — into events on a shared stream. The hub reads from that stream and updates its graph. Everything the user sees (brief, query, meeting commits) reads from the graph.
+    Each source has a small connector that turns what it produces (a doc edit, a meeting transcript, a deal update) into events on a shared stream. The hub reads from that stream and updates its graph. Everything the user sees (brief, query, meeting commits) reads from the graph.
   </p>
 
   <div class="pipeline-wrap">
-    <svg class="pipeline-svg" viewBox="0 0 1000 340" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;">
+    <svg class="pipeline-svg" viewBox="0 0 1200 380" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;">
       <defs>
         <marker id="pl-arr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#5a5c65"/></marker>
         <marker id="pl-arr-c" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#67e8f9"/></marker>
@@ -837,13 +910,15 @@
       <line class="divider" x1="400" y1="50" x2="400" y2="300"/>
       <line class="divider" x1="610" y1="50" x2="610" y2="300"/>
       <line class="divider" x1="800" y1="50" x2="800" y2="300"/>
+      <line class="divider" x1="1000" y1="50" x2="1000" y2="300"/>
 
       <!-- stage labels -->
       <text x="95" y="36" text-anchor="middle" class="stage">External sources</text>
       <text x="295" y="36" text-anchor="middle" class="stage">Adapters</text>
-      <text x="505" y="36" text-anchor="middle" class="stage">Event stream + store</text>
+      <text x="505" y="36" text-anchor="middle" class="stage">Event store + stream</text>
       <text x="705" y="36" text-anchor="middle" class="stage">Hub</text>
       <text x="900" y="36" text-anchor="middle" class="stage">Capabilities</text>
+      <text x="1100" y="36" text-anchor="middle" class="stage">User action</text>
 
       <!-- sources grouped -->
       <g>
@@ -862,18 +937,18 @@
         <text x="295" y="198" text-anchor="middle" class="sub">webhook or poll</text>
       </g>
 
-      <!-- stream + store -->
+      <!-- store (top) + stream (bottom, keyed) -->
       <g>
-        <rect class="box key" x="430" y="110" width="160" height="55" rx="3"/>
-        <text x="510" y="135" text-anchor="middle" class="node">Event stream</text>
-        <text x="510" y="152" text-anchor="middle" class="sub">append-only, idempotent</text>
+        <rect class="box" x="430" y="110" width="160" height="55" rx="3"/>
+        <text x="510" y="135" text-anchor="middle" class="node">Event store</text>
+        <text x="510" y="152" text-anchor="middle" class="sub">replayable history</text>
 
-        <rect class="box" x="430" y="185" width="160" height="55" rx="3"/>
-        <text x="510" y="210" text-anchor="middle" class="node">Event store</text>
-        <text x="510" y="227" text-anchor="middle" class="sub">replayable history</text>
+        <rect class="box key" x="430" y="185" width="160" height="55" rx="3"/>
+        <text x="510" y="210" text-anchor="middle" class="node">Event stream</text>
+        <text x="510" y="227" text-anchor="middle" class="sub">append-only, idempotent</text>
       </g>
 
-      <!-- graph -->
+      <!-- hub -->
       <g>
         <rect class="box key" x="630" y="140" width="150" height="70" rx="3"/>
         <text x="705" y="168" text-anchor="middle" class="node">Hub</text>
@@ -881,59 +956,72 @@
         <text x="705" y="202" text-anchor="middle" class="sub">alignment graph</text>
       </g>
 
-      <!-- surfaces -->
+      <!-- capabilities -->
       <g>
         <rect class="box" x="820" y="80" width="160" height="38" rx="3"/>
-        <text x="900" y="103" text-anchor="middle" class="node">Brief</text>
+        <text x="900" y="103" text-anchor="middle" class="node">Morning brief</text>
 
         <rect class="box" x="820" y="130" width="160" height="38" rx="3"/>
-        <text x="900" y="153" text-anchor="middle" class="node">Query</text>
+        <text x="900" y="153" text-anchor="middle" class="node">Ask</text>
 
         <rect class="box" x="820" y="180" width="160" height="38" rx="3"/>
         <text x="900" y="203" text-anchor="middle" class="node">Commit extractor</text>
 
         <rect class="box" x="820" y="230" width="160" height="38" rx="3"/>
-        <text x="900" y="253" text-anchor="middle" class="node">Connection router</text>
+        <text x="900" y="253" text-anchor="middle" class="node">Who to talk to</text>
       </g>
 
-      <!-- arrows -->
-      <path class="arrow" d="M160,170 L220,170" marker-end="url(#pl-arr)"/>
-      <path class="arrow" d="M370,170 L430,138" marker-end="url(#pl-arr)"/>
-      <path class="arrow" d="M510,165 L510,185" marker-end="url(#pl-arr)"/>
-      <path class="arrow" d="M590,165 L630,170" marker-end="url(#pl-arr)"/>
+      <!-- user action -->
+      <g>
+        <rect class="box" x="1020" y="140" width="160" height="70" rx="3"/>
+        <text x="1100" y="172" text-anchor="middle" class="node">User action</text>
+        <text x="1100" y="193" text-anchor="middle" class="sub">approve · edit · dismiss</text>
+      </g>
 
-      <!-- graph → surfaces -->
+      <!-- left-side arrows -->
+      <path class="arrow" d="M160,170 L220,170" marker-end="url(#pl-arr)"/>
+      <path class="arrow" d="M370,170 L430,210" marker-end="url(#pl-arr)"/>
+      <path class="arrow" d="M510,185 L510,167" marker-end="url(#pl-arr)"/>
+      <path class="arrow" d="M590,210 L630,180" marker-end="url(#pl-arr)"/>
+
+      <!-- hub → capabilities -->
       <path class="arrow" d="M780,165 C800,165 805,99 820,99" marker-end="url(#pl-arr)"/>
       <path class="arrow" d="M780,175 L820,149" marker-end="url(#pl-arr)"/>
       <path class="arrow" d="M780,185 L820,199" marker-end="url(#pl-arr)"/>
       <path class="arrow" d="M780,200 C800,200 805,249 820,249" marker-end="url(#pl-arr)"/>
 
-      <!-- commit loop back -->
-      <path class="arrow loop" d="M820,199 C700,290 580,290 510,240" marker-end="url(#pl-arr-c)"/>
-      <text x="660" y="298" text-anchor="middle" class="sub" fill="#67e8f9">reviewed commits emit new events</text>
+      <!-- capabilities → user action -->
+      <path class="arrow" d="M980,99 L1020,152" marker-end="url(#pl-arr)"/>
+      <path class="arrow" d="M980,149 L1020,166" marker-end="url(#pl-arr)"/>
+      <path class="arrow" d="M980,199 L1020,184" marker-end="url(#pl-arr)"/>
+      <path class="arrow" d="M980,249 L1020,198" marker-end="url(#pl-arr)"/>
+
+      <!-- user action → event stream (loop back) -->
+      <path class="arrow loop" d="M1020,210 C900,340 700,340 590,215" marker-end="url(#pl-arr-c)"/>
+      <text x="800" y="318" text-anchor="middle" class="sub" fill="#67e8f9">user actions emit new events</text>
     </svg>
   </div>
 
   <div class="stage-notes">
     <div class="stage-note">
       <div class="name">Adapters</div>
-      <div class="detail">One per source. Webhook-first, polling where the source doesn't push. Knows nothing about downstream.</div>
+      <div class="detail">One per source. Turns what the source produces (a doc edit, a meeting transcript, a deal update) into an event the stream can read. Real-time when the source supports it, on a schedule when it doesn't.</div>
     </div>
     <div class="stage-note">
       <div class="name">Event stream</div>
-      <div class="detail">Shared append-only log. Deterministic IDs — idempotent re-ingest. The integration seam.</div>
+      <div class="detail">The shared log of everything happening across sources. Ordered and deduplicated, so the hub reads from one place.</div>
     </div>
     <div class="stage-note">
       <div class="name">Event store</div>
-      <div class="detail">Replayable. Graph is derived state; change the derivation, replay the store to rebuild.</div>
+      <div class="detail">The full history of every event, kept on disk. If we change how the hub builds the graph, we replay the store to rebuild rather than re-pulling from every source.</div>
     </div>
     <div class="stage-note">
       <div class="name">Hub</div>
-      <div class="detail">World model + alignment graph. Typed nodes (KR, task, doc, meeting, decision, person) and typed edges, derived on write.</div>
+      <div class="detail">The world model and alignment graph. Objectives, tasks, docs, meetings, decisions, and people, with the links between them.</div>
     </div>
     <div class="stage-note">
       <div class="name">Capabilities</div>
-      <div class="detail">Readers over the hub state. Commit extractor is the only one that writes back — closing the loop.</div>
+      <div class="detail">What the user sees and acts on. Every action (approve a draft, edit a priority, ask a question) goes back on the stream as a new event, so the next brief already knows about it.</div>
     </div>
   </div>
 </section>
@@ -944,7 +1032,7 @@
   <div class="section-label">§3 · Monday morning</div>
   <h2>What it looks like when you log on.</h2>
   <p>
-    Overnight, adapters ingest and the brief generator composes. By 8 a.m., the layer has drafted proposed next steps for each priority — outlines, messages, decision options — and surfaced adjacent work from other orgs. The user's job is taste: approve, edit, or redirect.
+    Overnight, adapters ingest and the brief generator composes. By 8 a.m., the layer has picked today's priorities based on what's blocked, behind, or unowned, drafted a next step for each, and surfaced adjacent work from other orgs. The user's job is taste: approve, edit, or redirect.
   </p>
 
   <div class="journey">
@@ -964,7 +1052,7 @@
         <div class="time">04:15</div>
         <div class="marker"></div>
         <div class="body">
-          Commit extractor processes Friday's meetings — decisions, actions, open questions parsed from transcripts into proposed graph writes, queued for your review.
+          Commit extractor processes Friday's meetings. Decisions, actions, and open questions parsed from transcripts into proposed graph writes, queued for your review.
           <span class="what">extractor → proposed queue</span>
         </div>
       </div>
@@ -973,7 +1061,7 @@
         <div class="time">07:30</div>
         <div class="marker"></div>
         <div class="body">
-          Brief generator runs. For each priority, it drafts a proposed next step — a scoring pattern, a message, a decision memo — grounded in graph context. Connection router checks for adjacent work across orgs; Sara Fernandes at Deans of Admissions is building coach curriculum on the same essay topic you're refining in Rory.
+          Brief generator runs. For each priority, it drafts a proposed next step (a scoring pattern, a message, a decision memo) grounded in graph context. Connection router checks for adjacent work across orgs; Sara Fernandes at Deans of Admissions is building coach curriculum on the same essay topic you're refining in Rory.
           <span class="what">brief + router → proposed actions</span>
         </div>
       </div>
@@ -991,7 +1079,7 @@
         <div class="time">08:30</div>
         <div class="marker"></div>
         <div class="body">
-          You approve the Rory scoring pattern, edit the GradBloom options to reframe the second one, and send the drafted message to Tomas. Accept the intro to Sara — layer schedules Wed 2pm.
+          You approve the Rory scoring pattern, edit the GradBloom options to reframe the second one, and send the drafted message to Tomas. Accept the intro to Sara, and the layer schedules it for Wed 2pm.
           <span class="what">taste applied → actions fire</span>
         </div>
       </div>
@@ -1026,11 +1114,13 @@
         <div class="ui-main">
           <div class="greeting">Mon · Apr 20 · 08:00</div>
           <div class="title">Good morning, Luke.</div>
+          <div class="subtitle">Three priorities today — picked for what's blocked, behind, or unowned.</div>
 
           <div class="priority">
             <div class="heading">
               <span class="num">01</span>
               <span class="t">Refine Rory's feedback on essay concluding paragraphs.</span>
+              <span class="why behind">behind</span>
             </div>
             <div class="sig">Coaches flagged weak conclusions in three pilot sessions last week; Rory's current rubric barely touches them. Two KRs (pilot satisfaction, Q2 rollout) are waiting on this.</div>
             <div class="proposed">
@@ -1049,6 +1139,7 @@
             <div class="heading">
               <span class="num">02</span>
               <span class="t">Lock the confidentiality posture for GradBloom session-notes automation.</span>
+              <span class="why blocked">blocked</span>
             </div>
             <div class="sig">Pilot coaches onboard Wednesday. Drafting isn't the blocker — the confidentiality call is. Jess flagged it in the Apr 17 planning meeting; no decision logged since.</div>
             <div class="proposed">
@@ -1067,6 +1158,7 @@
             <div class="heading">
               <span class="num">03</span>
               <span class="t">Figure out who audits enrollment call transcripts, and how often.</span>
+              <span class="why unowned">unowned</span>
             </div>
             <div class="sig">Came up in the Apr 16 meeting and no one picked it up. The scoring criteria are done — the open question is who runs the audits and on what schedule.</div>
             <div class="proposed">
@@ -1101,9 +1193,47 @@
 </section>
 
 <!-- ========================================================== -->
+<!-- §4 ASK THE HUB -->
+<section class="section" id="ask">
+  <div class="section-label">§4 · Ask the hub</div>
+  <h2>Querying the intelligence layer.</h2>
+  <p>
+    Ask a question about anything in the hub. Every answer cites the meetings, docs, and decisions it came from. No meeting required, no waiting for someone to remember.
+  </p>
+
+  <div class="ui-mock">
+    <div class="ui-mock-bar">
+      <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+      <span><strong>Prepory Hub</strong> · Ask</span>
+      <span>Luke V.</span>
+    </div>
+    <div class="ask-view">
+      <div class="ask-q">What decisions have we made about Rory's feedback rubric in the last 90 days?</div>
+      <div class="ask-r">
+        <div class="intro">Four decisions since Jan 20:</div>
+        <ul>
+          <li><span class="date">Feb 3</span>Switched Rory's conclusion scoring from 5-point to 3-point.<span class="src">Q1 enrollment review · Jess</span></li>
+          <li><span class="date">Mar 9</span>Dropped confidence scores from the coach-facing view.<span class="src">Apr 17 planning meeting</span></li>
+          <li><span class="date">Mar 22</span>False positives now escalate to a human after three in a row.<span class="src">Mar team retro</span></li>
+          <li><span class="date">Apr 10</span>Concluding paragraphs — still open, no decision yet.<span class="src">your thread with Jess</span></li>
+        </ul>
+      </div>
+      <div class="ask-followup">
+        <div class="ask-chips">
+          <span>Who owns Rory rollout right now?</span>
+          <span>What's blocking the GradBloom pilot?</span>
+          <span>What's changed about pricing since January?</span>
+        </div>
+        <div class="freebox">Ask a follow-up…</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================== -->
 <!-- §5 CROSS-ORG COLLABORATION -->
 <section class="section" id="crossorg">
-  <div class="section-label">§4 · Cross-org collaboration</div>
+  <div class="section-label">§5 · Cross-org collaboration</div>
   <h2>Cross-org collaboration surfaces.</h2>
   <p>
     The links that lead from a KR to a design decision about Rory also connect a person at Prepory to a person at Deans of Admissions working on a similar problem. For anyone whose account spans orgs, this could be a central use case of the orchestration layer.
@@ -1119,7 +1249,7 @@
     <div class="cross-card">
       <div class="kicker">Shared infrastructure</div>
       <div class="line">Workflows built once, reused across orgs.</div>
-      <div class="desc">N2Growth built an automated research workflow for executive-search briefs and thought-leadership pieces — pulling sources, summarizing, drafting. Prepory could use the same pattern for college-research briefs. Different content, same pipeline. The graph surfaces the existing workflow before Prepory builds a parallel one.</div>
+      <div class="desc">N2Growth built an automated research workflow for executive-search briefs and thought-leadership pieces: pulling sources, summarizing, drafting. Prepory could use the same pattern for college-research briefs. Different content, same pipeline. The graph surfaces the existing workflow before Prepory builds a parallel one.</div>
     </div>
 
     <div class="cross-card">
@@ -1139,48 +1269,23 @@
 <!-- ========================================================== -->
 <!-- §6 OPEN QUESTIONS -->
 <section class="section" id="open">
-  <div class="section-label">§5 · Open questions</div>
-  <h2>What's worth deciding together.</h2>
+  <div class="section-label">§6 · Additional design decisions</div>
+  <h2>Additional design decisions.</h2>
 
   <div class="oq">
     <div class="oq-row">
-      <div class="tagcol"><span class="blocker">Blocker</span></div>
-      <div>
-        <h3>Is Google Chat in v1?</h3>
-        <p>Vault export (Enterprise tier, batch) vs opt-in bot in key spaces (real-time, partial) vs defer. This changes whether the pipeline is real-time end-to-end, which in turn changes what the brief can show.</p>
-      </div>
+      <h3>How do we handle decisions that happen in Google Chat DMs?</h3>
+      <p>A bot added to named spaces streams those conversations into the hub in real time, but one-to-one DMs stay outside of it. Some decisions happen there. We can push people to move those conversations into named spaces, or accept that some context won't make it in. Worth deciding explicitly rather than letting it default.</p>
     </div>
 
     <div class="oq-row">
-      <div class="tagcol"><span class="phil">Philosophy</span></div>
-      <div>
-        <h3>What counts as a "connection" worth surfacing?</h3>
-        <p>Sharing the same KR tag is easy but noisy. Semantic adjacency is powerful but opaque. If people stop trusting the people-connection surface, the whole cross-org premise falls apart — so the bar has to be high from day one.</p>
-      </div>
+      <h3>When should the hub surface a connection between people?</h3>
+      <p>Sharing the same objective is easy to detect but produces a lot of noise. Inferring that two people are working on similar things is more useful, but harder to trust. If people stop trusting the connections the hub surfaces, the cross-org story falls apart. The bar has to be high from day one.</p>
     </div>
 
     <div class="oq-row">
-      <div class="tagcol"><span class="phil">Philosophy</span></div>
-      <div>
-        <h3>What crosses an org boundary, and who chooses?</h3>
-        <p>Decisions, yes. KR titles, probably. Open questions, maybe. Raw documents, probably not. The default matters more than the override — it sets whether cross-org becomes the norm or the exception.</p>
-      </div>
-    </div>
-
-    <div class="oq-row">
-      <div class="tagcol"><span class="phil">Philosophy</span></div>
-      <div>
-        <h3>How do we handle the layer being wrong?</h3>
-        <p>The brief will mis-flag drift. The router will suggest bad matches. Trust erodes from false positives faster than it compounds from correct hits. The dispute primitive is a product question, not an ML one.</p>
-      </div>
-    </div>
-
-    <div class="oq-row">
-      <div class="tagcol"><span class="phil">Philosophy</span></div>
-      <div>
-        <h3>What does this displace, and for whom?</h3>
-        <p>If the brief replaces the routing-context work middle management currently does, the org has to decide what those humans do instead. Naming it here because it should shape the product — not be handled after the fact.</p>
-      </div>
+      <h3>What crosses an org boundary by default?</h3>
+      <p>Decisions, yes. Objective titles, probably. Open questions, maybe. Raw documents, probably not. The default matters more than the override. It sets whether cross-org visibility becomes the norm or the exception.</p>
     </div>
   </div>
 </section>
@@ -1191,4 +1296,4 @@
 
 </body>
 </html>
-                                                
+                                                                                                                                             

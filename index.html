@@ -286,7 +286,7 @@
   .stage-notes {
     margin-top: 22px;
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 10px;
   }
   .stage-note {
@@ -743,7 +743,7 @@
   </div>
   <h1>Intelligence layer implementation notes</h1>
   <div class="doc-subtitle">
-    Per-source integration feasibility, pipeline shape, a walkthrough of the logged-in experience, cross-org collaboration surfaces.
+    Per-source integration feasibility, pipeline shape, a walkthrough of the logged-in experience, intra-org and cross-org collaboration surfaces.
   </div>
 </div>
 
@@ -754,7 +754,7 @@
     <li><span class="num">§2</span><a href="#pipeline">Data pipeline</a><span class="page">·</span></li>
     <li><span class="num">§3</span><a href="#journey">Monday morning</a><span class="page">·</span></li>
     <li><span class="num">§4</span><a href="#ask">Ask the hub</a><span class="page">·</span></li>
-    <li><span class="num">§5</span><a href="#crossorg">Cross-org collaboration</a><span class="page">·</span></li>
+    <li><span class="num">§5</span><a href="#crossorg">Intra/cross-org collaboration</a><span class="page">·</span></li>
     <li><span class="num">§6</span><a href="#open">Additional design decisions</a><span class="page">·</span></li>
   </ul>
 </div>
@@ -996,8 +996,8 @@
       <path class="arrow" d="M980,199 L1020,184" marker-end="url(#pl-arr)"/>
       <path class="arrow" d="M980,249 L1020,198" marker-end="url(#pl-arr)"/>
 
-      <!-- user action → event stream (loop back) -->
-      <path class="arrow loop" d="M1020,210 C900,340 700,340 590,215" marker-end="url(#pl-arr-c)"/>
+      <!-- user action → event stream (loop back, routed below all boxes) -->
+      <path class="arrow loop" d="M1100,210 C1100,320 700,330 590,215" marker-end="url(#pl-arr-c)"/>
       <text x="800" y="318" text-anchor="middle" class="sub" fill="#67e8f9">user actions emit new events</text>
     </svg>
   </div>
@@ -1021,7 +1021,11 @@
     </div>
     <div class="stage-note">
       <div class="name">Capabilities</div>
-      <div class="detail">What the user sees and acts on. Every action (approve a draft, edit a priority, ask a question) goes back on the stream as a new event, so the next brief already knows about it.</div>
+      <div class="detail">What the user sees and reacts to. Each surface reads from the hub and composes something the user can respond to.</div>
+    </div>
+    <div class="stage-note">
+      <div class="name">User action</div>
+      <div class="detail">What the user does with each proposed output: approve, edit, dismiss, or follow up. Each action lands back on the stream as a new event, so the next brief already knows about it.</div>
     </div>
   </div>
 </section>
@@ -1061,7 +1065,7 @@
         <div class="time">07:30</div>
         <div class="marker"></div>
         <div class="body">
-          Brief generator runs. For each priority, it drafts a proposed next step (a scoring pattern, a message, a decision memo) grounded in graph context. Connection router checks for adjacent work across orgs; Sara Fernandes at Deans of Admissions is building coach curriculum on the same essay topic you're refining in Rory.
+          Brief generator runs. For each priority, it drafts a proposed next step (a scoring pattern, a message, a decision memo) grounded in graph context. Connection router checks for adjacent work across orgs (e.g. Sara Fernandes at DoA is building coach curriculum on the same essay topic you're refining in Rory)
           <span class="what">brief + router → proposed actions</span>
         </div>
       </div>
@@ -1079,7 +1083,7 @@
         <div class="time">08:30</div>
         <div class="marker"></div>
         <div class="body">
-          You approve the Rory scoring pattern, edit the GradBloom options to reframe the second one, and send the drafted message to Tomas. Accept the intro to Sara, and the layer schedules it for Wed 2pm.
+          You approve the Rory scoring pattern, edit the GradBloom options to reframe the second one, and send the drafted message to Kyle. Accept the intro to Sara, and the layer schedules it for Wed 2pm.
           <span class="what">taste applied → actions fire</span>
         </div>
       </div>
@@ -1141,13 +1145,13 @@
               <span class="t">Lock the confidentiality posture for GradBloom session-notes automation.</span>
               <span class="why blocked">blocked</span>
             </div>
-            <div class="sig">Pilot coaches onboard Wednesday. Drafting isn't the blocker — the confidentiality call is. Jess flagged it in the Apr 17 planning meeting; no decision logged since.</div>
+            <div class="sig">Pilot coaches onboard Wednesday. Drafting isn't the blocker — the confidentiality call is. Taylor flagged it in the Apr 17 planning meeting; no decision logged since.</div>
             <div class="proposed">
               <span class="label">Proposed — review &amp; approve</span>
               Drawing on the Mar 28 enrollment decision on student-data handling, I drafted two options — redacted-by-default or coach-opt-in — with a short rationale for each.
-              <div class="ask">Would you like me to send both options to Jess now, or set up 15 minutes with her first?</div>
+              <div class="ask">Would you like me to send both options to Taylor now, or set up 15 minutes with her first?</div>
               <div class="actions">
-                <span class="primary">Send options to Jess</span>
+                <span class="primary">Send options to Taylor</span>
                 <span>Schedule 15 min</span>
               </div>
               <div class="freebox">Tell me something else…</div>
@@ -1163,10 +1167,10 @@
             <div class="sig">Came up in the Apr 16 meeting and no one picked it up. The scoring criteria are done — the open question is who runs the audits and on what schedule.</div>
             <div class="proposed">
               <span class="label">Proposed — review &amp; approve</span>
-              Given current enrollment volume, a weekly sample of ten calls looks about right. I drafted a short message to Tomas asking him to take it on.
-              <div class="ask">Would you like me to send the message to Tomas, or suggest someone else?</div>
+              Given current enrollment volume, a weekly sample of ten calls looks about right. I drafted a short message to Kyle asking him to take it on.
+              <div class="ask">Would you like me to send the message to Kyle, or suggest someone else?</div>
               <div class="actions">
-                <span class="primary">Send to Tomas</span>
+                <span class="primary">Send to Kyle</span>
                 <span>Suggest someone else</span>
               </div>
               <div class="freebox">Tell me something else…</div>
@@ -1212,10 +1216,10 @@
       <div class="ask-r">
         <div class="intro">Four decisions since Jan 20:</div>
         <ul>
-          <li><span class="date">Feb 3</span>Switched Rory's conclusion scoring from 5-point to 3-point.<span class="src">Q1 enrollment review · Jess</span></li>
+          <li><span class="date">Feb 3</span>Switched Rory's conclusion scoring from 5-point to 3-point.<span class="src">Q1 enrollment review · Taylor</span></li>
           <li><span class="date">Mar 9</span>Dropped confidence scores from the coach-facing view.<span class="src">Apr 17 planning meeting</span></li>
           <li><span class="date">Mar 22</span>False positives now escalate to a human after three in a row.<span class="src">Mar team retro</span></li>
-          <li><span class="date">Apr 10</span>Concluding paragraphs — still open, no decision yet.<span class="src">your thread with Jess</span></li>
+          <li><span class="date">Apr 10</span>Concluding paragraphs — still open, no decision yet.<span class="src">your thread with Taylor</span></li>
         </ul>
       </div>
       <div class="ask-followup">
@@ -1234,9 +1238,9 @@
 <!-- §5 CROSS-ORG COLLABORATION -->
 <section class="section" id="crossorg">
   <div class="section-label">§5 · Cross-org collaboration</div>
-  <h2>Cross-org collaboration surfaces.</h2>
+  <h2>Intra-org and cross-org collaboration surfaces.</h2>
   <p>
-    The links that lead from a KR to a design decision about Rory also connect a person at Prepory to a person at Deans of Admissions working on a similar problem. For anyone whose account spans orgs, this could be a central use case of the orchestration layer.
+    The links that lead from a KR to a design decision about Rory also connect a person at Prepory to a colleague (potentially at another company) working on a similar problem. For anyone whose account spans orgs, this could be a central use case of the orchestration layer.
   </p>
 
   <div class="cross-grid">
@@ -1280,12 +1284,12 @@
 
     <div class="oq-row">
       <h3>When should the hub surface a connection between people?</h3>
-      <p>Sharing the same objective is easy to detect but produces a lot of noise. Inferring that two people are working on similar things is more useful, but harder to trust. If people stop trusting the connections the hub surfaces, the cross-org story falls apart. The bar has to be high from day one.</p>
+      <p>Sharing the same objective is easy to detect but produces a lot of noise. Inferring that two people are working on similar things is more useful, but harder to trust. If people stop trusting the connections the hub surfaces, it will be an ineffective tool for spurring collaboration.</p>
     </div>
 
     <div class="oq-row">
-      <h3>What crosses an org boundary by default?</h3>
-      <p>Decisions, yes. Objective titles, probably. Open questions, maybe. Raw documents, probably not. The default matters more than the override. It sets whether cross-org visibility becomes the norm or the exception.</p>
+      <h3>What crosses an org boundary by default? Do we want anything to cross org boundaries at all?</h3>
+      <p>The initial vision was for a single-org tool, but many of our team members work across orgs. This tool could help us share resources and knowledge efficiently, but are there certain boundaries we want to maintain?</p>
     </div>
   </div>
 </section>
@@ -1296,4 +1300,3 @@
 
 </body>
 </html>
-                                                                                                                                             
